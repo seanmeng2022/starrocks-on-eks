@@ -1,0 +1,73 @@
+prometheus:
+  prometheusSpec:
+    retention: 5h
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    scrapeTimeout: 10s
+    additionalScrapeConfigs:
+      - job_name: 'StarRocks_Cluster' 
+        metrics_path: '/metrics'    
+
+        static_configs:
+          - targets:
+            
+            %{ for fe in fe_targets ~}
+            - ${fe}
+            %{ endfor ~}
+            
+            labels:
+              group: fe
+
+      
+          - targets:
+            
+            %{ for be in be_targets ~}
+            - ${be}
+            %{ endfor ~}
+
+            labels:
+              group: be
+
+    storageSpec:
+      volumeClaimTemplate:
+        metadata:
+          name: data
+        spec:
+          storageClassName: gp3
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Gi
+
+grafana:
+  enabled: true
+  defaultDashboardsEnabled: true
+  # sidecar:
+  #   dashboards:
+  #     enabled: true
+  #     label: starrocks_dashboard
+  #     labelValue: "1"
+  #     # Allow discovery in all namespaces for dashboards
+  #     searchNamespace: ALL
+
+  #   datasources:
+  #     enabled: true
+  #     defaultDatasourceEnabled: true
+  #     isDefaultDatasource: true
+
+  #     uid: prometheus
+
+  #     ## Create datasource for each Pod of Prometheus StatefulSet;
+  #     ## this uses headless service `prometheus-operated` which is
+  #     ## created by Prometheus Operator
+  #     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/0fee93e12dc7c2ea1218f19ae25ec6b893460590/pkg/prometheus/statefulset.go#L255-L286
+  #     createPrometheusReplicasDatasources: false
+  #     label: grafana_datasource
+  #     labelValue: "1"
+
+  # extraConfigmapMounts: []
+  # - name: starrocks-dashboard-configmap
+  #   mountPath: /etc/grafana/ssl/
+  #   configMap: starrocks-dashboard-configmap
+  #   readOnly: true
